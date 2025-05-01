@@ -1,6 +1,19 @@
-use std::net::SocketAddr;
+use std::{env, net::SocketAddr};
 
 use axum::{extract::ConnectInfo, http::HeaderMap, response::{Html, IntoResponse}, routing::get, Router};
+use reqwest::Client;
+use serde::{Deserialize, Serialize};
+
+
+
+#[derive(Deserialize, Debug)]
+struct IpInfoResponse {
+    ip: String,
+    city: Option<String>,
+    region: Option<String>,
+    country: Option<String>,
+    loc: Option<String>,
+}
 
 
 #[tokio::main]
@@ -37,6 +50,36 @@ async fn main() {
 
         println!("👤 New visitor IP: {}", real_ip);
 
+
+        //Get Geolocation info using ipInfo api
+        let location = get_geolocation(&real_ip).await;
+
+        match location {
+            Ok(location) => {
+                let loc_string = location.loc.unwrap_or_default(); // latitude, logitude
+
+                //Generate google map link
+                let map_url = if !loc_string.is_empty() {
+                    format!("https://www.google.com/maps?q={}", loc_string)
+                }else{
+                    "Location data unavailable".to_string()
+
+                };
+
+                println!(
+                    "🌍 Location for IP {}: {}, {}, {}",
+                    location.ip,
+                    location.city.unwrap_or_default(),
+                    location.region.unwrap_or_default(),
+                    location.country.unwrap_or_default(),
+                );
+                println!("🗺️  Google Maps Link: {}", map_url)
+            }
+            Err(e) => {
+                println!("Error getting geolocation");
+            }
+        }
+
         Html(r#"
         <!DOCTYPE html>
         <html lang="en">
@@ -57,3 +100,17 @@ async fn main() {
         
     }
     
+
+    // Function to get geolocation of the IP using ipinfo.io API
+async fn get_geolocation(ip: &str) -> Result<IpInfoResponse, reqwest::Error> {
+    // fetch the API key from the environment variable
+    let api_key = env::var("IPINFO_API_KEY")
+     .expect("IPINFO_API_KEY must be set in environment variables");
+
+    let url = format!("https://ipinfo.io/{}/json?token={}", ip, api_key);
+    let client = Client::new();
+    let res = client.get(url).send().await?;
+    let location: IpInfoResponse = res.json().await?;
+
+    Ok(location)
+}

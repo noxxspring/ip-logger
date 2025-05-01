@@ -32,7 +32,7 @@ async fn main() {
         let real_ip = headers
         .get("X-Forwarded-For")
         .and_then(|value| value.to_str().ok())
-        .map(|s| s.to_string())
+        .map(|s| s.split(',').next().unwrap_or(s).to_string()) // Take the first ip from the list
         .unwrap_or_else(|| addr.ip().to_string()); 
 
         println!("👤 New visitor IP: {}", real_ip);

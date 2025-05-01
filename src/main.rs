@@ -75,7 +75,7 @@ async fn main() {
                 );
                 println!("🗺️  Google Maps Link: {}", map_url)
             }
-            Err(e) => {
+            Err(_e) => {
                 println!("Error getting geolocation");
             }
         }
@@ -110,6 +110,9 @@ async fn get_geolocation(ip: &str) -> Result<IpInfoResponse, reqwest::Error> {
     let url = format!("https://ipinfo.io/{}/json?token={}", ip, api_key);
     let client = Client::new();
     let res = client.get(url).send().await?;
+    let res = res.error_for_status()?;
+
+    
     let location: IpInfoResponse = res.json().await?;
 
     Ok(location)

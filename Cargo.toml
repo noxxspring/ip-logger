@@ -1,0 +1,10 @@
+[package]
+name = "ip_logger"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+tracing-subscriber = "0.3.19"
+tokio = { version = "1.44.2", features = ["full"]}
+axum = "0.6"
+hyper = "1.6.0"

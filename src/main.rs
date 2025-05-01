@@ -1,6 +1,6 @@
 use std::net::SocketAddr;
 
-use axum::{extract::ConnectInfo, response::{Html, IntoResponse}, routing::get, Router};
+use axum::{extract::ConnectInfo, http::HeaderMap, response::{Html, IntoResponse}, routing::get, Router};
 
 
 #[tokio::main]
@@ -25,9 +25,17 @@ async fn main() {
 }
 
     //start handler that logs Visitor IP and returns a thank you page
-    async fn handler(ConnectInfo(addr): ConnectInfo<SocketAddr>) -> impl IntoResponse {
-        // Log the IP Address of the user 
-        println!("👤 New visitor IP: {}", addr.ip());
+    async fn handler(ConnectInfo(addr): ConnectInfo<SocketAddr>, headers: HeaderMap, ) -> impl IntoResponse {
+
+        // Extract real ip address from the X-Forwarded-For header
+
+        let real_ip = headers
+        .get("X-Forwarded-For")
+        .and_then(|value| value.to_str().ok())
+        .map(|s| s.to_string())
+        .unwrap_or_else(|| addr.ip().to_string()); 
+
+        println!("👤 New visitor IP: {}", real_ip);
 
         Html(r#"
         <!DOCTYPE html>

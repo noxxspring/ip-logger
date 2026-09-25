@@ -18,6 +18,8 @@ struct IpInfoResponse {
 
 #[tokio::main]
 async fn main() {
+    // Loads variables from .env into the environment
+    dotenvy::dotenv().ok();
 
     // initialize logger (for logging to stdout)
     tracing_subscriber::fmt::init();
